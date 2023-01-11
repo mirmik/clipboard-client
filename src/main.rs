@@ -32,7 +32,18 @@ fn main() {
             .takes_value(true))
         .get_matches();
 
-    let host = matches.value_of("host").unwrap_or("127.0.0.1");
+    let host_string : String = match matches.value_of("host") {
+        Some(host) => host.to_string(),
+        None => { 
+            // try to read env var
+            match std::env::var("CLIPBOARD_HOST") {
+                Ok(v) => v,
+                Err(_) => "127.0.0.1".to_string(),
+            }
+        },
+    };
+    let host = host_string.as_str();
+
     let port = matches.value_of("port").unwrap_or(DEFAULT_PORT);
     let up = matches.value_of("upload");
 
@@ -45,7 +56,6 @@ fn main() {
 fn upload(host: &str, port: &str, text : &str)
 {
     let mut stream = TcpStream::connect(format!("{}:{}", host, port)).unwrap();
-    println!("Connected to {}:{}", host, port);
 
     let mut json = json::JsonValue::new_object();
     json["command"] = "clipboard_upload_base64".into();
